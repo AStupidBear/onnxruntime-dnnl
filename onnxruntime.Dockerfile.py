@@ -21,7 +21,7 @@ d = DockerFile(base_img='ubuntu:18.04', name=img)
 
 d.ARG = 'PYTHON_VERSION=3.6'
 d.ARG = 'ONNXRUNTIME_REPO=https://github.com/Microsoft/onnxruntime'
-d.ARG = 'ONNXRUNTIME_SERVER_BRANCH=v1.2.0'
+d.ARG = 'ONNXRUNTIME_SERVER_BRANCH=v1.3.0'
 d.ARG = 'DEBIAN_FRONTEND=noninteractive'
 
 d.RUN = '''\
