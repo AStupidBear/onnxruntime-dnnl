@@ -26,7 +26,7 @@ d.ARG = 'DEBIAN_FRONTEND=noninteractive'
 
 d.RUN = '''\
 apt-get update && \
-apt-get install -y sudo git bash
+apt-get install -y sudo git bash patchelf
 '''
 
 d.ENV = 'PATH=/opt/cmake/bin:$PATH'
@@ -34,18 +34,21 @@ d.RUN = 'git clone --single-branch --branch $ONNXRUNTIME_SERVER_BRANCH --recursi
 d.RUN = '/onnxruntime/tools/ci_build/github/linux/docker/scripts/install_ubuntu.sh -p $PYTHON_VERSION'
 d.RUN = '/onnxruntime/tools/ci_build/github/linux/docker/scripts/install_deps.sh -p $PYTHON_VERSION'
 
-d.RUN = '/bin/sh /onnxruntime/dockerfiles/scripts/install_common_deps.sh'
+d.RUN = 'sed -i s/pip/pip3/g /onnxruntime/dockerfiles/scripts/install_common_deps.sh && /bin/sh /onnxruntime/dockerfiles/scripts/install_common_deps.sh'
 
 d.WORKDIR = '/'
+args = '--use_mklml --use_dnnl'
 if os.getenv('USE_NGRAPH', '0') == '1':
-    args = '--use_ngraph'
-else:
-    args = '--use_mklml --use_nuphar --use_tvm --use_llvm --use_dnnl'
+    args = ' --use_ngraph'
+if os.getenv('USE_NUPHAR', '0') == '1':
+    args += ' --use_tvm --use_llvm --use_nuphar'
+d.ENV = 'AUDITWHEEL_PLAT=manylinux2014_x86_64'
 d.RUN = '''\
 mkdir -p /onnxruntime/build && \
-pip3 install sympy packaging cpufeature jupyter && \
+pip3 install sympy packaging cpufeature jupyter auditwheel && \
 python3 /onnxruntime/tools/ci_build/build.py --build_dir /onnxruntime/build \
---config Release --skip_onnx_tests --build_wheel --parallel %s''' % args
+--config Release --enable_pybind --build_wheel --build_shared_lib \
+--skip_tests --parallel --skip_submodule_sync %s''' % args
 
 os.chdir(tempfile.mkdtemp())
 d.build_img(extra_args='--network host')
